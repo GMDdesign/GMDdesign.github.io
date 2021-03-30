@@ -8,8 +8,24 @@ li {
     list-style-type: none;
 }
 
+ul {
+    display: flex;
+    justify-content: space-between;
+    color: white;
+    padding-left: 5%;
+    padding-right: 5%;
+}
+
 a {
     text-decoration: none;
+}
+
+A {
+    color: #ffffff;
+}
+
+A:visited {
+    color: #ffffff;
 }
 
 body {
@@ -21,8 +37,8 @@ body {
 .container {
     margin-left: 228px;
     margin-right: 228px;
-    justify-content: center;
-    align-items: center;
+    /* justify-content: center;
+    align-items: center; */
 }
 
 
@@ -42,9 +58,10 @@ h1 {
 .header-middle {
     background: url(../img/BG-mid.png);
     background-repeat: no-repeat;
-    background-position: center;
+    background-position: relative, center;
     height: 280px;
     text-align: center;
+    z-index: 1;
 }
 
 .header-bot {
@@ -53,7 +70,15 @@ h1 {
 }
 
 .accordion {
-    position: center;
+    color: white;
+    font-weight: 600;
+    font-size: 20px;
+    padding: 22px;
+    display: flex;
+    flex: auto;
+    flex-direction: column;
+    align-content: flex-start;
+    align-items: center;
     background-color: #06f541;
     width: 560px;
     height: 70px;
@@ -65,25 +90,122 @@ h1 {
     border: none;
     outline: none;
     transition: 0.4s;
+    opacity: 1.0;
 }
 
 .panel {
-    background-color: #06f541;
-    width: 560px;
-    height: 288px;
-    margin: 0 auto;
-    border-bottom-left-radius: 40px;
-    border-bottom-right-radius: 40px;
-    background: linear-gradient(-45deg, #50EB85, #4BA6F9, #F686B6, #FC9359, #FCF570);
     display: none;
     overflow: hidden;
+    padding: 20px;
+}
+
+.accordion.transparent {
+    opacity: 0.7;
+    border-bottom-left-radius: 40px;
+    border-bottom-right-radius: 40px;
+    height: 360px;
 }
 
 .inner {
     padding: 20px;
 }
 
+input[type=image] {
+    width: 100%;
+    height: 100%;
+    border-bottom-left-radius: 40px;
+    border-bottom-right-radius: 40px;
+    border: none;
+    outline: none;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 20px;
+    text-align: center;
+}
+
+.li-items {
+    font-size: 18px;
+    padding-top: 26px;
+}
+
+#imageUpload {
+    top: 0%;
+    position: absolute;
+    opacity: 0;
+    height: 54px;
+    width: 54px;
+    border-radius: 30px;
+    z-index: 3;
+}
+
+#profile-container {
+    top: 12px;
+    position: relative;
+    height: 54px;
+    width: 54px;
+    border-radius: 30px;
+    z-index: 1;
+}
+
+#profile-container img {
+    height: 54px;
+    width: 54px;
+    border-radius: 30px;
+}
+
+#profile-container .svg {
+    opacity: 0;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+#profile-container .overlay {
+    top: 0%;
+    position: absolute;
+    max-width: 100%;
+    height: 54px;
+    width: 54px;
+    border-radius: 30px;
+    z-index: 2;
+}
+
+#profile-container:hover .overlay {
+    background-color: black;
+    opacity: 0.7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: .5s ease;
+}
+
+#profile-container:hover .svg {
+    opacity: 1;
+    transition: .5s ease;
+}
+
+.block {
+    height: 180px;
+    width: 140px;
+    background-color: white;
+    border-radius: 20px;
+    border: #BBBABA solid;
+    color: #BBBABA;
+    text-align: center;
+    display: table;
+}
+
+.material-icons {
+    display: table-cell;
+    vertical-align: middle;
+}
+
 .search-panel {
+    position: relative;
     background-color: #06f541;
     width: 984px;
     height: 80px;
@@ -94,19 +216,145 @@ h1 {
     background: linear-gradient(-45deg, #50EB85, #4BA6F9, #F686B6, #FC9359, #FCF570);
 }
 
+.search-icon {
+    position: absolute;
+    right: 12%;
+    top: 20%;
+}
+
+.middle-panel {
+    padding-top: 26px;
+}
+
 
 /* body */
 
+input[type=search] {
+    width: 80%;
+    height: 64px;
+    border-bottom-left-radius: 40px;
+    border-bottom-right-radius: 40px;
+    border: none;
+    outline: none;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 20px;
+    text-align: center;
+}
+
+input[type=search]::-webkit-search-cancel-button {
+    display: none;
+}
+
+.new-text {
+    text-align: center;
+    margin-top: 40px;
+}
+
+.grid {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    position: relative;
+}
+
 .iframe-div {
+    margin: 13px;
     height: 120px;
     width: 220px;
     border-radius: 10px;
     overflow: hidden;
+    background: url(https://i.pinimg.com/originals/dd/67/4f/dd674f89d713bb2645a3292510219998.gif) center center no-repeat;
+}
+
+.my-ads {
+    height: 220px;
+    width: 120px;
+    border-radius: 10px;
+}
+
+.banner {
+    border-radius: 10px;
+    position: absolute;
+    left: -13.5%;
+    top: -27%;
+}
+
+.banner-2 {
+    border-radius: 10px;
+    position: absolute;
+    right: -13.5%;
+    top: -27%;
+}
+
+.banner-3 {
+    border-radius: 40px;
+    position: absolute;
+    left: -13.5%;
+    top: 54%;
+}
+
+.banner-4 {
+    border-radius: 10px;
+    position: absolute;
+    right: -13.5%;
+    top: 54%;
+}
+
+.ads {
+    margin-top: 10%;
+}
+
+.ads-div {
+    margin: 13px;
+    height: 120px;
+    width: 220px;
+    border-radius: 10px;
+    background-color: yellowgreen;
 }
 
 iframe {
     width: 100%;
     height: 100%;
+}
+
+.btn {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 40px;
+    border: none;
+    outline: none;
+    background-color: rgba(255, 255, 0, 0);
+    cursor: pointer;
+}
+
+.dots {
+    font-size: 60px;
+    transition: 0.7s;
+    transition: color .2s ease-in-out;
+    text-transform: uppercase;
+    background: linear-gradient(-45deg, #50EB85, #4BA6F9, #F686B6, #FC9359, #FCF570);
+    background-clip: text;
+    -webkit-background-clip: text;
+}
+
+.dots:hover {
+    transform: scale(1.2);
+    color: rgba(0, 0, 0, 0)
+}
+
+@keyframes rainbow {
+    0% {
+        background-position: left
+    }
+    50% {
+        background-position: right
+    }
+    100% {
+        background-position: left
+    }
 }
 
 
@@ -121,3 +369,6 @@ iframe {
     position: relative;
     height: 280px;
 }
+
+
+/* preloader */

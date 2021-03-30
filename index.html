@@ -7,40 +7,216 @@
     <title>GMD Placement</title>
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/main.css">
+    <link rel="icon" href="img/favicon.png" type="image/png" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 
 <body>
     <header>
         <div class="header-top">
-            <button class="accordion">Разместить</button>
-            <div class="panel">
-                <h1>panel 0 header</h1>
-                <h2>panel 0 sub-head</h2>
-                <p>panel 0 content</p>
-            </div>
+            <ul>
+                <li class="li-items">
+                    <a class="partner" href="./gmdpartner.html">Партнерская программа</a>
+                </li>
+                <li class="li-items">
+                    <a class="about-project" href="./gmdabout-us.html">О проекте</a>
+                </li>
+                <li><button class="accordion">
+                    <div class="parent">Разместить
+                    <span class="material-icons">
+                        add_box
+                        </span>
+                    </div>
+                        <div class="panel">
+                            <ul >
+                                <li>
+                                    <h2>Объявление</h2>
+                                    <div class="block">
+                                        <div class="overlay2">
+                                        <span class="material-icons">
+                                            add_circle
+                                            </span>
+                                            <input type="image" placeholder=" ">
+                                        </div>
+                                            <script>
+                                            $(function(){
+                                                $('.block').on('click', function(){
+                                                     $('.accordion').prop('disabled' , true)
+                                                });
+                                             });
+                                             </script>
+                                             </div>
+                                </li>
+                                <li>
+                                    <h2>Видеореклама</h2>
+                                    <input class="block">
+                                        <span class="material-icons">
+                                            add_circle
+                                            </span>
+                                            <script>
+                                                $(function(){
+                                                    $('.block').on('click', function(){
+                                                         $('.accordion').prop('disabled' , true)
+                                                    });
+                                                 });
+                                                 </script>
+                                </li>
+                            </ul>
+                        </div>
+                </button>
+                    <script>
+                        $("button").click(function() {
+                            $(".accordion").toggleClass("transparent");
+                            $(".panel").slideToggle("fast");
+                        });
+                    </script>
+                </li>
+                <li>
+                    <div id="profile-container">
+                        <img src="img/profile.png" id="profileImage">
+                        <div class="overlay">
+                            <span class="svg material-icons">
+                            add_a_photo
+                            </span>
+                            <input id="imageUpload" type="file" accept="image/png, image/jpeg" name="profile_photo" placeholder="Photo" required="" capture>
+                        </div>
+                    </div>
+                </li>
+                <li class="li-items">
+                    <a class="sign-in" href="./gmdlogin.html">Вход</a>
+                </li>
+                <li class="li-items">
+                    <a class="log-in" href="./gmdregistr.html">Регистрация</a>
+                </li>
+            </ul>
         </div>
 
         <div class="header-middle">
             <h1>Размещение</h1>
         </div>
-        <div class="header-bot"></div>
-    </header>
-    <section class="video-content">
-        <div class="search-panel"></div>
-        <div class="iframe-div">
-            <iframe src="https://www.youtube.com/embed/wOmwoPsrCrQ" allowfullscreen="allowfullscreen" mozallowfullscreen="mozallowfullscreen" msallowfullscreen="msallowfullscreen" oallowfullscreen="oallowfullscreen" webkitallowfullscreen="webkitallowfullscreen" frameborder="0">
-        </iframe>
-        </div>
-    </section>
-    <section class="ads">
+        <div class="header-bot">
+            <ul class="middle-panel">
+                <li>
+                    <p>Товары</p>
+                </li>
+                <li>
+                    <p>Услуги</p>
+                </li>
+                <li>
+                    <p>Видеоконтент</p>
+                </li>
+                <li>
+                    <p>Творчество</p>
+                </li>
+                <li>
+                    <p>Игры</p>
+                </li>
+                <li>
+                    <p>Недвижимость</p>
+                </li>
+                <li>
+                    <p>Работа</p>
+                </li>
+                <li>
+                    <p>Интернет</p>
+                </li>
+            </ul>
 
-    </section>
+        </div>
+    </header>
+    <div class="container">
+        <section class="video-content">
+
+            <div id="search-panel" class="search-panel">
+                <input id="search-input" class="search-input" type="search" name="q" placeholder="Поиск объявлений...">
+                <span class="material-icons search-icon">
+                    search
+                    </span>
+            </div>
+            <h2 class="new-text"> Новые видео</h2>
+            <div class="grid">
+                <div class="banner">
+                    <a href="https://www.binance.com/ru/register?ref=NUWHVVZ8"><img src="./img/banner.svg" class="my-ads">
+                    </a>
+                </div>
+                <div class="banner-2">
+                    <a href="https://www.tinkoff.ru/sl/3dghFqzsjcf"><img src="./img/banner-2.svg" class="my-ads">
+                    </a>
+                </div>
+                <div class="banner-3">
+                    <a href="https://pocketoption.com/register?utm_source=affiliate&a=O4LGBeQEcXug4k&ac=binaryoptions">
+                        <img src="https://affiliate.pocketoption.com/uploads/banners/kript300x600_RU.jpg" class="my-ads"></a>
+                </div>
+                <div class="banner-4">
+                    <a href="https://payeer.com/?session=5940831">
+                        <img src="./img/banner-4.svg" class="my-ads"></a>
+                </div>
+                <div class="iframe-div">
+                    <iframe src="https://www.youtube.com/embed/wOmwoPsrCrQ" allowfullscreen="allowfullscreen" mozallowfullscreen="mozallowfullscreen" msallowfullscreen="msallowfullscreen" oallowfullscreen="oallowfullscreen" webkitallowfullscreen="webkitallowfullscreen" frameborder="0">
+            </iframe>
+                </div>
+                <div class="iframe-div">
+                    <iframe src="https://www.youtube.com/embed/wOmwoPsrCrQ" allowfullscreen="allowfullscreen" mozallowfullscreen="mozallowfullscreen" msallowfullscreen="msallowfullscreen" oallowfullscreen="oallowfullscreen" webkitallowfullscreen="webkitallowfullscreen" frameborder="0">
+            </iframe>
+                </div>
+                <div class="iframe-div">
+                    <iframe src="https://www.youtube.com/embed/wOmwoPsrCrQ" allowfullscreen="allowfullscreen" mozallowfullscreen="mozallowfullscreen" msallowfullscreen="msallowfullscreen" oallowfullscreen="oallowfullscreen" webkitallowfullscreen="webkitallowfullscreen" frameborder="0">
+            </iframe>
+                </div>
+                <div class="iframe-div">
+                    <iframe src="https://www.youtube.com/embed/wOmwoPsrCrQ" allowfullscreen="allowfullscreen" mozallowfullscreen="mozallowfullscreen" msallowfullscreen="msallowfullscreen" oallowfullscreen="oallowfullscreen" webkitallowfullscreen="webkitallowfullscreen" frameborder="0">
+            </iframe>
+                </div>
+                <div class="iframe-div">
+                    <iframe src="https://www.youtube.com/embed/wOmwoPsrCrQ" allowfullscreen="allowfullscreen" mozallowfullscreen="mozallowfullscreen" msallowfullscreen="msallowfullscreen" oallowfullscreen="oallowfullscreen" webkitallowfullscreen="webkitallowfullscreen" frameborder="0">
+            </iframe>
+                </div>
+                <div class="iframe-div">
+                    <iframe src="https://www.youtube.com/embed/wOmwoPsrCrQ" allowfullscreen="allowfullscreen" mozallowfullscreen="mozallowfullscreen" msallowfullscreen="msallowfullscreen" oallowfullscreen="oallowfullscreen" webkitallowfullscreen="webkitallowfullscreen" frameborder="0">
+            </iframe>
+                </div>
+                <div class="iframe-div">
+                    <iframe src="https://www.youtube.com/embed/wOmwoPsrCrQ" allowfullscreen="allowfullscreen" mozallowfullscreen="mozallowfullscreen" msallowfullscreen="msallowfullscreen" oallowfullscreen="oallowfullscreen" webkitallowfullscreen="webkitallowfullscreen" frameborder="0">
+            </iframe>
+                </div>
+                <div class="iframe-div">
+                    <iframe src="https://www.youtube.com/embed/wOmwoPsrCrQ" allowfullscreen="allowfullscreen" mozallowfullscreen="mozallowfullscreen" msallowfullscreen="msallowfullscreen" oallowfullscreen="oallowfullscreen" webkitallowfullscreen="webkitallowfullscreen" frameborder="0">
+            </iframe>
+                </div>
+            </div>
+
+            <button class="btn">
+                <div class="dots">&#8226; &#8226; &#8226;</div>
+            </button>
+
+        </section>
+        <section class="ads">
+            <h2 class="new-text">Новые объявления</h2>
+            <div class="grid">
+                <div class="ads-div"></div>
+                <div class="ads-div"></div>
+                <div class="ads-div"></div>
+                <div class="ads-div"></div>
+                <div class="ads-div"></div>
+                <div class="ads-div"></div>
+                <div class="ads-div"></div>
+                <div class="ads-div"></div>
+            </div>
+            <button class="btn">
+                <div class="dots">&#8226; &#8226; &#8226;</div>
+            </button>
+        </section>
+    </div>
     <footer>
         <div class="footer-image">
-
+            <div class="container">
+                <p>Мы в социальных сетях!</p>
+            </div>
         </div>
     </footer>
     <script src="index.js"></script>
+
 </body>
 
 </html>
