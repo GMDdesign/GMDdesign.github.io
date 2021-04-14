@@ -41,6 +41,24 @@ h2 {
     padding-top: 5%;
 }
 
+h4 {
+    color: #000000;
+    padding-top: 30px;
+}
+
+h5 {
+    color: #000000;
+    padding-top: 8px;
+}
+
+h6 {
+    color: #000000;
+    top: 348px;
+    position: absolute;
+    left: 48px;
+    font-size: 10px;
+}
+
 p {
     padding-top: 4%;
 }
@@ -67,17 +85,21 @@ body {
 }
 
 .bg-body {
+    background: url(../img/BGreg.jpg);
     background-repeat: no-repeat;
-    background-position: relative, center;
-    height: 280px;
     text-align: center;
-    z-index: 1;
+    background-position: center;
+    background-size: cover;
+    z-index: -111;
+    width: 1440px;
+    height: 1024px;
+    padding-top: 40px;
+    padding-bottom: 40px;
 }
 
 .frame {
-    background-color: #06f541;
     color: white;
-    display: flex;
+    /* display: flex; */
     align-items: center;
     width: 970px;
     height: 80px;
@@ -92,11 +114,11 @@ body {
 /* modalwin */
 
 h3 {
-    /* margin-top: 80px; */
+    padding-top: 40px;
 }
 
 input[type=text] {
-    background: linear-gradient(to right, #FCF570, #FC9359, #F686B6, #4BA6F9, #50EB85);
+    background: linear-gradient(to right, #fcf57000, #fc925900, #f686b700, #4ba5f900, #50eb8600);
     text-align: center;
     outline: none;
     border: none;
@@ -108,6 +130,7 @@ input[type=text] {
     border-top-right-radius: 20px;
     z-index: 100;
     position: relative;
+    top: -50px;
 }
 
 .shadow-1 {
@@ -115,18 +138,18 @@ input[type=text] {
     z-index: 4;
     width: 204px;
     height: 44px;
-    filter: blur(2px);
+    filter: blur(6px);
     border-bottom-left-radius: 20px;
     border-bottom-right-radius: 20px;
     border-top-left-radius: 20px;
     border-top-right-radius: 20px;
     position: absolute;
-    top: 196px;
-    left: 144px;
+    top: 100px;
+    left: 48px;
 }
 
 input[type=password] {
-    background: linear-gradient(to right, #FCF570, #FC9359, #F686B6, #4BA6F9, #50EB85);
+    background: linear-gradient(to right, #fcf57000, #fc925900, #f686b700, #4ba5f900, #50eb8600);
     text-align: center;
     outline: none;
     border: none;
@@ -138,6 +161,7 @@ input[type=password] {
     border-top-right-radius: 20px;
     z-index: 101;
     position: relative;
+    top: -28px;
 }
 
 .shadow-2 {
@@ -145,18 +169,18 @@ input[type=password] {
     z-index: 5;
     width: 204px;
     height: 44px;
-    filter: blur(2px);
+    filter: blur(6px);
     border-bottom-left-radius: 20px;
     border-bottom-right-radius: 20px;
     border-top-left-radius: 20px;
     border-top-right-radius: 20px;
     position: absolute;
-    top: 254px;
-    left: 144px;
+    left: 48px;
+    top: 160px;
 }
 
 input[type=email] {
-    background: linear-gradient(to right, #FCF570, #FC9359, #F686B6, #4BA6F9, #50EB85);
+    background: linear-gradient(to right, #fcf57000, #fc925900, #f686b700, #4ba5f900, #50eb8600);
     text-align: center;
     outline: none;
     border: none;
@@ -168,6 +192,7 @@ input[type=email] {
     border-top-right-radius: 20px;
     z-index: 102;
     position: relative;
+    top: -4px;
 }
 
 .shadow-3 {
@@ -175,41 +200,70 @@ input[type=email] {
     z-index: 6;
     width: 204px;
     height: 44px;
-    filter: blur(2px);
+    filter: blur(6px);
     border-bottom-left-radius: 20px;
     border-bottom-right-radius: 20px;
     border-top-left-radius: 20px;
     border-top-right-radius: 20px;
     position: absolute;
-    top: 312px;
-    left: 144px;
+    top: 220px;
+    left: 48px;
+}
+
+.registration-with {
+    padding-bottom: 30px;
+}
+
+.shadow-4 {
+    background: linear-gradient(to right, #FCF570, #FC9359, #F686B6, #4BA6F9, #50EB85);
+    z-index: 6;
+    width: 204px;
+    height: 44px;
+    filter: blur(6px);
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    position: absolute;
+    top: 290px;
+    left: 48px;
+}
+
+input::placeholder {
+    color: #000000;
+}
+
+.social-registration {
+    display: flex;
+    justify-content: space-evenly;
+    position: absolute;
+    top: 298px;
+    width: 204px;
+    left: 48px;
+    z-index: 55;
 }
 
 .registration-form {
-    display: flex;
-    flex-direction: column;
-    top: 80px;
-    margin-bottom: 80px;
     position: relative;
-    width: 492px;
-    height: 600px;
+    width: 300px;
+    height: 400px;
     border-radius: 34px;
     text-align: center;
     background: linear-gradient(#DBD4D4, #504949);
-    margin: 20px;
     margin: 0 auto;
-    margin-top: 10px;
+    margin-top: 80px;
 }
 
 .background-image {
     background-image: url(../img/JPGMD.png);
+    background-repeat: no-repeat;
     border-radius: 34px;
     background-size: contain;
     position: absolute;
     box-shadow: inset 0px 0px 10px 0px #504949;
     z-index: 12;
-    width: 492px;
-    height: 600px;
+    width: 300px;
+    height: 400px;
 }
 
 .center-text {
@@ -220,10 +274,6 @@ input[type=email] {
     margin-top: 30%;
     display: flex;
     flex-direction: column;
-}
-
-.li-registr {
-    padding: 10px;
 }
 
 .registration-form:before {
@@ -238,32 +288,28 @@ input[type=email] {
     z-index: -1;
 }
 
-.slider.round {
-    border-radius: 34px;
-}
-
-.slider.round:before {
-    border-radius: 50%;
-}
-
-switch {
+.switch {
+    top: 60px;
+    left: -120px;
     position: relative;
     display: inline-block;
-    width: 60px;
-    height: 34px;
+    width: 20px;
+    height: 12px;
 }
 
 .switch input {
-    display: none;
+    opacity: 0;
+    width: 0;
+    height: 0;
 }
 
 .slider {
     position: absolute;
     cursor: pointer;
-    top: 366px;
-    left: 100px;
-    right: 330px;
-    bottom: 200px;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background-color: #ccc;
     -webkit-transition: .4s;
     transition: .4s;
@@ -272,10 +318,10 @@ switch {
 .slider:before {
     position: absolute;
     content: "";
-    height: 26px;
-    width: 26px;
-    left: 4px;
-    bottom: 4px;
+    height: 8px;
+    width: 8px;
+    left: 10px;
+    bottom: 2px;
     background-color: white;
     -webkit-transition: .4s;
     transition: .4s;
@@ -290,16 +336,27 @@ input:focus+.slider {
 }
 
 input:checked+.slider:before {
-    -webkit-transform: translateX(26px);
-    -ms-transform: translateX(26px);
-    transform: translateX(26px);
+    -webkit-transform: translateX(-8px);
+    -ms-transform: translateX(-8px);
+    transform: translateX(-8px);
+    z-index: 200;
 }
 
 
-/* 
+/* Rounded sliders */
+
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
 .footer {
-    background: #504949;
+    background-color: #504949;
     position: relative;
-    background-position: bottom;
     height: 80px;
-} */
+    /* margin-top: 80px; */
+    z-index: -2;
+}
