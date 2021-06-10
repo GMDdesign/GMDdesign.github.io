@@ -247,9 +247,22 @@
                 </div>
             </div>
 
-            <button class="btn">
+            <section id="one-1">
+                <button id=btn-1 class="btn">
                 <div class="dots">&#8226; &#8226; &#8226;</div> 
             </button>
+            </section>
+
+            <section id="two-1" style="display:none">
+                <h1> :)</h1>
+            </section>
+            <script>
+                $('#btn-1').on('click', function() {
+                    $('#one-1').hide('slow')
+                    $('#two-1').show('slow');
+                });
+            </script>
+
 
         </section>
         <section class="ads">
@@ -264,9 +277,22 @@
                 <div class="ads-div"></div>
                 <div class="ads-div"></div>
             </div>
-            <button class="btn">
+
+            <section id="one-2">
+                <button id=btn-2 class="btn">
                 <div class="dots">&#8226; &#8226; &#8226;</div>
             </button>
+            </section>
+            <section id="two-2" style="display:none">
+                <h1> :)</h1>
+            </section>
+            <script>
+                $('#btn-2').on('click', function() {
+                    $('#one-2').hide('slow')
+                    $('#two-2').show('slow');
+                });
+            </script>
+
         </section>
     </div>
     <footer>

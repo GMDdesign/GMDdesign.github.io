@@ -28,8 +28,6 @@ body {
 .container {
     margin-left: 228px;
     margin-right: 228px;
-    /* justify-content: center;
-    align-items: center; */
 }
 
 
@@ -237,6 +235,7 @@ input[type=image] {
 li {
     list-style-type: none;
     display: table-cell;
+    vertical-align: middle;
 }
 
 li.has-sub-menu {
@@ -267,15 +266,14 @@ li.has-sub-menu a::before {
 }
 
 .middle-panel li:nth-child(1) {
-    padding-top: 20px;
     min-width: 100px;
-    height: 60px;
+    height: 80px;
 }
 
 .middle-panel li:nth-child(1):hover {
     transition: 0.2s;
     background-color: #50EB85;
-    height: 60px;
+    height: 80px;
     padding: auto;
     width: auto;
 }
@@ -412,7 +410,7 @@ li.has-sub-menu a::before {
 
 .has-sub-menu:hover .dropdown-content {
     display: block;
-    margin-top: 42px;
+    margin-top: 31px;
 }
 
 
