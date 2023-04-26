@@ -1,52 +1,191 @@
+<?php
+error_reporting(E_ALL);
+ini_set("display_errors", "on");
+use function RedBeanPHP\with;
+use wkhtmltox\PDF\Object;
+require "inc/db.php";
+?>
+
+
+<?php
+R::exec('DELETE FROM uads WHERE time < DATE_SUB(NOW(), INTERVAL 7 DAY)');
+R::exec('DELETE FROM adsauction WHERE time < DATE_SUB(NOW(), INTERVAL 14 DAY)');
+$user = R::findOne('users','id = ?', array($_SESSION['logged_user']->id));
+$ads = R::findOne('uads', 'users_id = ? ORDER BY id DESC', [$user->id]);
+
+
+
+function LoadAvatar($img){
+    $type = $img['type'];
+    $name = md5(microtime()).'.'.substr($type, strlen("image/"));
+    $dir = 'uploads/avatars/';
+    $uploadfile = $dir.$name;
+
+    if(move_uploaded_file($img['tmp_name'], $uploadfile)){
+        $user = R::findOne('users','id = ?', array($_SESSION['logged_user']->id));
+        $user->avatar = $name;
+        R::store($user);
+
+    }else{
+        return false;
+    }
+    return true;
+}
+if($_SESSION == NULL) header('Location: https://gmdhub.com/gmdlogin.php');
+    if(!$user) header ('Location: https://gmdhub.com/gmdlogin.php');
+if(isset($_POST['set-avatar'])){
+    $img = $_FILES['avatar'];
+
+    if(imgSecurity($img)) LoadAvatar($img);
+    echo "<meta http-equiv='refresh' content='0'>";
+}
+
+
+function Upload($up){
+    $type1 = $up['type'];
+    $name1 = md5(microtime()).'.'.substr($type1, strlen("image/"));
+    $dir1 = 'uploads/photos/';
+    $uploadfile1 = $dir1.$name1;
+
+    if(move_uploaded_file($up['tmp_name'], $uploadfile1)){
+        $user = R::findOne('users','id = ?', array($_SESSION['logged_user']->id));
+        $data = $_POST;
+        $ads = R::dispense('uads');
+        $ads->ads = $name1;
+        $ads->title = $data['title'];
+        $ads->descript = $data['descript'];
+        $ads->price = $data['price'];
+        $ads->category = $data['category'];
+        $ads->regions = $data['regions'];
+        $ads->confirm = $data['confirm'] = '0';
+        $ads->time = R::isoDateTime();
+        $ads->avatar = $user->avatar;
+        $ads->login = $user->login;
+        $user->ownAdsList[] = $ads;
+        R::store($user);
+
+    }else{
+        return false;
+    }
+    return true;
+}
+    
+if(isset($_POST['submit-ads'])){
+    $up = $_FILES['ads'];
+    if(uploadSecurity($up)) Upload($up);
+    $user = R::findOne('users','id = ?', array($_SESSION['logged_user']->id));
+    $ads = R::findOne('uads', 'users_id = ? ORDER BY id DESC', [$user->id]);
+    // $regions = R::findOne('regions', 'id= ? ORDER BY id DESC', [$regions->id]);
+        $_SESSION['logged_user']->lastImage = $ads->ads;
+        $_SESSION['logged_user']->lastTitle = $ads->title;
+        $_SESSION['logged_user']->lastDescript = $ads->descript;
+        $_SESSION['logged_user']->lastPrice = $ads->price;
+        $_SESSION['logged_user']->lastCategory = $ads->category;
+        $_SESSION['logged_user']->region = $ads->region;
+        $_SESSION['logged_user']->time = $ads->time;
+        $_SESSION['logged_user']->confirm = $ads->confirm;
+        echo "<meta http-equiv='refresh' content='0'>";
+}else{
+    $defaultImage = "defaultimage.png";
+}
+
+$radio = $_POST;
+// $choose_ads = $_POST;
+// $radio_onetwo = $_POST;
+if(isset($radio['submit-auc'])){
+    class customException extends Exception {
+        function errorMessage(){
+            $errorMsg = 'Ошибка, попробуйте снова.';
+            return $errorMsg;
+        }
+    }
+    try {
+        $user = R::findOne('users','id = ?', array($_SESSION['logged_user']->id));
+        $auc = R::dispense('adsauction');
+        $auc->auc_position = $radio['choosen'];
+        $auc->auc_ads = $radio['onetwo'];
+        $auc->price = $radio['price-auc'];
+        $auc->time = R::isoDateTime();
+        $user->ownAucList[] = $auc;
+        R::store($user);
+        if($auc->price < $user->balance){
+            R::exec('UPDATE users SET `balance` = `balance` - '.$auc->price.' WHERE id = '.$_SESSION['logged_user']->id.'');
+        }else{
+            $time = R::isoDateTime();
+            $find = R::findOne('adsauction', 'time = ?',[$time]);
+            $delete = R::load('adsauction', $find->id);
+            R::trash($delete);
+            echo '<div class="up-balance">Недостаточно средств!</div>';
+        }
+        // if(!isset($choose_ads['choose-ads'])){
+        //     $time = R::isoDateTime();
+        //     $find = R::findOne('adsauction', 'time = ?',[$time]);
+        //     $delete = R::load('adsauction', $find->id);
+        //     R::trash($delete);
+        //     echo '<div class="info-auc">Вы не выбрали объявление!</div>';
+        // }
+    }
+    catch(customException $e){
+        echo $e->errorMessage();
+    }
+}
+?>
+<?php   
+if(isset($_SESSION['logged_user'])): 
+?>
+
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru, en">
 
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GMD Placement</title>
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    <title>GMD Hub</title>
     <link rel="stylesheet" href="css/normalize.css">
-    <link rel="stylesheet" href="css/profile.css">
+    <link rel="stylesheet" href="css/profile.css?v001">
+    <link rel="stylesheet" href="css/g-stats.css?v001">
+    <link rel="stylesheet" href="media/profile.css?v001">
     <link rel="icon" href="img/favicon.png" type="image/png" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="gmd-profile.js"></script>
 </head>
 
 <body>
     <header>
         <div class="header-top">
-            <a href="./index.html">
-                <span class="material-icons">
-                keyboard_backspace
+            <div class="width-nav">
+                <a href="index.php">
+                    <span class="material-icons unselectable">
+                    cottage
                 </span>
-            </a>
-            <a class="back-link" href="index.html">На главную</a>
+                </a>
+                <a class="back-link" href="index.php">На главную</a>
+            </div>
             <p class="GMD">Личный кабинет</p>
+            <div class="width-nav">
+                <a href="./logout.php" class="logout">Выход</a>
+                <a href="./logout.php">
+                    <span class="material-icons unselectable">
+                    logout
+                    </span></a>
+            </div>
         </div>
     </header>
-
     <div class="slideshow-container">
         <div class="mySlides fade">
             <section id="slide-0" class="content">
                 <div class="container">
                     <div class="top-block">
-                        Скрыть/показать анимацию
-                        <span class="material-icons">
-                                visibility
-                                </span>
+                    <?php if ($user->status === 'hHSDFAoKM98hDNCJIA7cC9C4J3NGN45G97bbytSDF9P'){
+                        echo '<a href="./admin/admin.php">Админ панель</a>';
+                    }else{
+                    };?>
                     </div>
-
                     <div class="top">
                         <div class="btn-container">
                             <div id="btn-2" class="lk next" onclick="plusSlides(2)">
-                                <script>
-                                    $('#btn-2').on('click', function() {
-                                        $('#slide-2').show('slow');
-                                    });
-                                </script>
-                                <span style="font-size: 3em;" class="material-icons">
+                                <span style="font-size: 3em;" class="material-icons unselectable">
                                 person_pin
                                 </span>
                             </div>
@@ -54,12 +193,7 @@
                         </div>
                         <div class="btn-container">
                             <div id="btn-1" class="partner next" onclick="plusSlides(1)">
-                                <script>
-                                    $('#btn-1').on('click', function() {
-                                        $('#slide-1').show('slow');
-                                    });
-                                </script>
-                                <span style="font-size: 3em;" class="material-icons">
+                                <span style="font-size: 3em;" class="material-icons unselectable">
                                 volunteer_activism
                                 </span>
                             </div>
@@ -70,12 +204,7 @@
                     <div class="middle">
                         <div class="btn-container">
                             <div id="btn-3" class="ads next" onclick="plusSlides(3)">
-                                <script>
-                                    $('#btn-3').on('click', function() {
-                                        $('#slide-3').show('slow');
-                                    });
-                                </script>
-                                <span style="font-size: 3em;" class="material-icons">
+                                <span style="font-size: 3em;" class="material-icons unselectable">
                                 dashboard
                                 </span>
                             </div>
@@ -84,19 +213,23 @@
                         <div class="line"></div>
                         <div class="line2"></div>
                         <div class="line3"></div>
-                        <div id="btn-0" class="center-circle">
-                            <span class="material-icons">
-                                add_a_photo
-                                </span>
+                        <div class="btn-container">
+                            <div id="btn-0" class="center-circle">
+                                <img src="uploads/avatars/<?php echo $user->avatar; ?>" class="avatar">
+                            </div>
+                            <?php echo $_SESSION['logged_user']->login;?>
+                            <form action="./gmdprofile.php" method="post" enctype="multipart/form-data">
+                            <label for="input-file" class="custom-file-upload">
+                                <input id="input-file" class="custom-file-input" type="file" name="avatar">
+                                <button class="button-avatar" type="submit" name="set-avatar">Ok</button>
+                            </label>
+                                
+                            </form>
                         </div>
+
                         <div class="btn-container">
                             <div id="btn-4" class="balance next" onclick="plusSlides(4)">
-                                <script>
-                                    $('#btn-4').on('click', function() {
-                                        $('#slide-4').show('slow');
-                                    });
-                                </script>
-                                <span style="font-size: 3em;" class="material-icons">
+                                <span style="font-size: 3em;" class="material-icons unselectable">
                                 account_balance_wallet
                                 </span>
                             </div>
@@ -107,12 +240,7 @@
                     <div class="bottom">
                         <div class="btn-container">
                             <div id="btn-5" class="stats-1 next" onclick="plusSlides(5)">
-                                <script>
-                                    $('#btn-5').on('click', function() {
-                                        $('#slide-5').show('slow');
-                                    });
-                                </script>
-                                <span style="font-size: 3em;" class="material-icons">
+                                <span style="font-size: 3em;" class="material-icons unselectable">
                                 query_stats
                                 </span>
                             </div>
@@ -120,23 +248,18 @@
                         </div>
                         <div class="btn-container">
                             <div id="btn-6" class="stats-2 next" onclick="plusSlides(6)">
-                                <script>
-                                    $('#btn-6').on('click', function() {
-                                        $('#slide-6').show('slow');
-                                    });
-                                </script>
-                                <span style="font-size: 3em;" class="material-icons">
+                                <span style="font-size: 3em;" class="material-icons unselectable">
                                 insert_chart_outlined
                                 </span>
                             </div>
                             <a style="color: #000; font-weight:bold; font-size: 1.1em;" class="limk-text" href="#">Статистика профиля</a>
                         </div>
 
-
                         <div class="bottom-block">
-                            <span class="material-icons">
+                            <span class="material-icons unselectable">
                                 share
-                                </span> Поделиться в социальных сетях
+                                </span> 
+                                Поделиться в социальных сетях
                         </div>
                     </div>
                 </div>
@@ -145,12 +268,14 @@
     </div>
 
     <div class="mySlides fade">
-        <section id="slide-1" class="lk-page" style="display:none">1
-            <div class="prev" onclick="plusSlides(7)">Вернуться к профилю</div>
+        <section id="slide-1" class="lk-page" style="display:none"> 
+            <div class="prev" onclick="plusSlides(7)">
+            <span class="material-icons unselectable">
+                keyboard_backspace
+                </span></div>
             <div class="container">
                 <h1>Партнерская программа</h1>
                 <p>Моя партнерская ссылка:</p>
-
                 <div class="partner-table">
                     <p>Переходов по ссылке:</p>
                     <p>Новые зарегистрированные пользователи:</p>
@@ -162,22 +287,23 @@
     </div>
 
     <div class="mySlides fade">
-        <section id="slide-2" class="ads-page" style="display:none">2
-            <div class="prev" onclick="plusSlides(7)">Вернуться к профилю</div>
+        <section id="slide-2" class="ads-page" style="display:none"> 
+            <div class="prev" onclick="plusSlides(7)"><span class="material-icons unselectable">
+                keyboard_backspace
+                </span></div>
             <div class="container">
                 <h1>Личные данные</h1>
                 <div class="personal-container">
                     <div class="personal-left-block">
                         <ul class="personal-list">
-                            <li class="personal-item">Фамилия <input type="text"></li>
-
-                            <li class="personal-item">Имя <input type="text"></li>
-                            <li class="personal-item">Отчество <input type="text"></li>
-                            <li class="personal-item">Дата рождения <input type="text"></li>
-                            <li class="personal-item">Страна <input type="text"></li>
-                            <li class="personal-item">Город <input type="text"></li>
-                            <li class="personal-item">Физический адрес <input type="text"></li>
-                            <li class="personal-item">Статус верификации <input type="text"></li>
+                            <li class="personal-item">Фамилия <input class="personal-data" type="text" name="" placeholder="Введите Вашу фамилию"></li>
+                            <li class="personal-item">Имя <input class="personal-data" type="text" name="" placeholder="Введите Ваше имя"></li>
+                            <li class="personal-item">Номер телефона <input class="personal-data" type="tel" name="" pattern="^\d{3}-\d{3}-\d{4}$" required="required" placeholder="+7"></li>
+                            <li class="personal-item">Дата рождения <input class="personal-data" type="text" name="" placeholder="дд.мм.гггг"></li>
+                            <li class="personal-item">Страна <input class="personal-data" type="text" name="" placeholder="Выбрать страну"></li>
+                            <li class="personal-item">Город <input class="personal-data" type="text" name="" placeholder="Выбрать город"></li>
+                            <li class="personal-item">Физический адрес <input class="personal-data" type="text" name="" placeholder="Адрес"></li>
+                            <li class="personal-item">Статус верификации <input class="personal-data" type="text" name=""></li>
                         </ul>
                         <button class="save-data">Сохранить</button>
                     </div>
@@ -189,90 +315,314 @@
             </div>
         </section>
     </div>
-
+<!-- Загрузка объявлний -->
     <div class="mySlides fade">
-        <section id="slide-3" class="center-page" style="display:none">3
-            <div class="prev" onclick="plusSlides(7)">Вернуться к профилю</div>
+        <section id="slide-3" class="center-page" style="display:none"> 
+            <div class="prev" onclick="plusSlides(7)"><span class="material-icons unselectable">
+                keyboard_backspace
+                </span></div>
             <div class="container">
                 <h1>Мои объявления</h1>
                 <div class="centered">
                     <div class="scroll">
+                        <?php
+                        $sql = R::getAll('SELECT * FROM uads WHERE (users_id = ?) ORDER BY id DESC', [$user->id]);
+                        ?>
                         <ul>
-                            <li>
-                                <div class="ads-section"></div>
+                        <?php foreach($sql as $elements):
+                            ?>
+                            <li class="li-ads-section">
+                                <div class="ads-section">
+                                    <?php if($_SESSION['logged_user']->lastImage === NULL){?>
+                                        <img class="photos unselectable" src='uploads/photos/<?=$defaultImage?>' width='100%' height='100%'/>
+                                        <?php }else{?>
+                                    <img class="photos unselectable" src='uploads/photos/<?=$elements['ads']?>' width='100%' height='100%'/>
+                                        <p class="text-title"><?php echo $elements['title'];?></p>
+                                        <p class="text-descript"><?php echo $elements['descript'];?></p>
+                                        <p class="text-region"><?php echo $elements['regions'];?></p>
+                                        <p class="text-price"><?php echo $elements['price'];?></p>
+                                        <p class="text-category"><?php echo $elements['category'];?></p>
+                                        <?php if($elements['confirm'] === '1'){
+                                            echo "Опубликовано";
+                                            } else{
+                                                echo "На проверке";
+                                            }?>
+                                    <?php }?>
+                                </div>
                                 <div class="second-child">
-                                    <div class="change">
-                                        <span class="svg material-icons">
+                                    <button id="change-1" class="change">
+                                        <span class="svg material-icons unselectable">
                                             create
                                             </span>
-                                    </div>
+                                        </button>
                                     <div class="add-time">
-                                        <span class="svg material-icons">
+                                        <span class="svg material-icons unselectable">
                                             alarm
                                             </span>
                                     </div>
                                 </div>
-                                <p class="text-other"> длинное название объявления</p>
-                                <p class="text-timer"> Осталось:</p>
-                            </li>
-                            <li>
-                                <div class="ads-section"></div>
-                                <div class="second-child">
-                                    <div class="change">
-                                        <span class="svg material-icons">
-                                            create
-                                            </span>
-                                    </div>
-                                    <div class="add-time">
-                                        <span class="svg material-icons">
-                                            alarm
-                                            </span>
-                                    </div>
-                                </div>
-                                <p class="text-other">А сдесь прям очень длинное название объявления</p>
-                                <p class="text-timer"> Осталось:</p>
-                            </li>
-                            <li>
-                                <div class="ads-section"></div>
-                                <div class="second-child">
-                                    <div class="change">
-                                        <span class="svg material-icons">
-                                            create
-                                            </span>
-                                    </div>
-                                    <div class="add-time">
-                                        <span class="svg material-icons">
-                                            alarm
-                                            </span>
+                                <div id="change-modal-1" class="change-modal-1">
+                                    <div class="change-modal-content-1">
+                                    <span class="close-change-1 unselectable">&times;</span>
+                                    <h2 class="ch2">Что хотите изменить?</h2>
+                                        <form class="change-modal-form" action="./gmdprofile.php" enctype="multipart/form-data" method="post">
+                                            <h3>Название<h3>
+                                                <input type="text" name="change-title" class="items-settings-ads" placeholder="Изменить название" id="title">
+                                            <h3>Описание<h3>
+                                                <input type="text" name="change-descript" class="items-settings-ads" placeholder="Изменить описание" id="description">
+                                            <h3>Цена<h3>
+                                                <input type="text" name="change-price" class="items-settings-ads" placeholder="Изменить цену" id="price">
+                                            <h3>Категория<h3>
+                                                <input type="text" name="change-category" class="items-settings-ads" placeholder="Изменить категорию" id="category">
+                                            <h3>Регион<h3>
+                                                <input type="text" name="change-region" class="items-settings-ads" placeholder="Изменить регион" id="region">
+                                            <button type="submit-change" class="save-change-modal-content-1">Сохранить изменения
+                                                <span class="material-icons unselectable">
+                                                ios_share
+                                                </span>
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
-                                <p class="text-other"> Тут едет паровоз тутуч тутуч тутуч тутуч тутуч тутуч тутуч тутуч</p>
-                                <p class="text-timer"> Осталось:</p>
-                            </li>
-                            <li>
-                                <div class="ads-section"></div>
-                                <div class="second-child">
-                                    <div class="change">
-                                        <span class="svg material-icons">
-                                            create
-                                            </span>
-                                    </div>
-                                    <div class="add-time">
-                                        <span class="svg material-icons">
-                                            alarm
-                                            </span>
-                                    </div>
+                                <div class="time-section">
                                 </div>
-                                <p class="text-other"> Сдесь собрался зоопарк из жирафоф и собак<br> из лошадок и кролей<br> стадо гордых голубей<br> но пришел к ним петушок<br> и закрыл их на замок</p>
-                                <p class="text-timer"> Осталось:</p>
                             </li>
+                            <?php
+                        endforeach;
+                            ?>
                         </ul>
                     </div>
                     <div class="container-other">
-                        <div class="auction"></div>
+                        <button id="myBtn-1" class="auction">
+                            <span style="font-size: 3em; color: white;" class="material-icons unselectable">
+                                add_circle
+                                </span>
+                        </button>
                         <p class="text-other"> Аукцион объявлений</p>
-                        <div class="add-ads"></div>
+                        <div id="myModal-1" class="modal-1">
+                                <div class="modal-content-1">
+                                <span class="close-1 unselectable">&times;</span>
+                                    <div class="h2-popup">
+                                    <h2>Выставить объявление на аукцион</h2><p class="info" data-tooltip="1. Чтобы выставить объявление на аукцион, Ваше объявление должно быть опубликовано и проверено. &#173;2. Цена, предложенная вами, должна быть выше предложенной в данный момент. &#173;3. Если выполнены п.1 и п.2, Ваше объявление попадает в топ показов на главной странице сайта на определенное время.">&#128712;</p>
+                                    </div>
+                                        <form class="modal-form" action="./gmdprofile.php" method="post">
+                                            <div class="grid-auc">
+                                                <div class="col-auc-one">
+                                                    <div class="element1-div-2">
+                                                        <input id="radio-1" type="radio" name="choosen" value="1" class="element1" checked></input>
+                                                        <label for="radio-1"></label>
+                                                    </div>
+                                                    <div class="element1-div-2">
+                                                        <input id="radio-2" type="radio" name="choosen" value="2" class="element1"></input>
+                                                        <label for="radio-2"></label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-auc-two">
+                                                    <div class="top-group-elements">
+                                                    <div class="element1-div">
+                                                        <input id="radio-3" type="radio" name="choosen" value="3" class="element1"></input>
+                                                        <label for="radio-3"></label>
+                                                    </div>
+                                                    <div class="element1-div">
+                                                        <input id="radio-4" type="radio" name="choosen" value="4" class="element1"></input>
+                                                        <label for="radio-4"></label>
+                                                    </div>
+                                                    <div class="element1-div">
+                                                        <input id="radio-5" type="radio" name="choosen" value="5" class="element1"></input>
+                                                        <label for="radio-5"></label>
+                                                    </div>
+                                                    <div class="element1-div">
+                                                        <input id="radio-6" type="radio" name="choosen" value="6" class="element1"></input>
+                                                        <label for="radio-6"></label>
+                                                    </div>
+                                                    </div>
+                                                    <div class="bot-group-elements">
+                                                    <div class="element1-div">
+                                                        <input id="radio-7" type="radio" name="choosen" value="7" class="element1"></input>
+                                                        <label for="radio-7"></label>
+                                                    </div>
+                                                    <div class="element1-div">
+                                                        <input id="radio-8" type="radio" name="choosen" value="8" class="element1"></input>
+                                                        <label for="radio-8"></label>
+                                                    </div>
+                                                    <div class="element1-div">
+                                                        <input id="radio-9" type="radio" name="choosen" value="9" class="element1"></input>
+                                                        <label for="radio-9"></label>
+                                                    </div>
+                                                    <div class="element1-div">
+                                                        <input id="radio-10" type="radio" name="choosen" value="10" class="element1"></input>
+                                                        <label for="radio-10"></label>
+                                                    </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-auc-three">
+                                                <div class="element1-div-2">
+                                                    <input id="radio-11" type="radio" name="choosen" value="11" class="element1"></input>
+                                                    <label for="radio-11"></label>
+                                                    </div>
+                                                    <div class="element1-div-2">
+                                                    <input id="radio-12" type="radio" name="choosen" value="12" class="element1"></input>
+                                                    <label for="radio-12"></label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <h3>Выберите позицию<h3>
+                                            <div class="grid-btns">
+                                                <div class="btns">
+                                                    <a id="choose-ads" class="choose-ads">Выбрать</a>
+                                                    <p class="choose-ads-text">Выберите объявление</p>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <input type="number" name="price-auc" class="items-settings-ads" placeholder="Указать цену" min="100" maxlength="9" value="100" oninput="maxLengthCheckk(this)">
+                                            </div>
+                                            <input type="datetime-local" name="time" readonly>
+                                            <button type="submit" name="submit-auc" class="save-modal-content-1">Опубликовать
+                                            <span class="material-icons unselectable">
+                                            ios_share
+                                            </span>
+                                            </button>
+                                            </div>
+                                            </div>
+                                            <div id="selected-ads" class="selected-ads">
+                                                <div class="modal-win-choose-ads">
+                                                    <span class="close-choose">&times;</span>
+                                                    <p>Выберите объявление</p>
+                                                        <?php 
+                                                        for ($i = 0; $i < count($sql); $i++):?>
+                                                        <?php $elements = $sql[$i];
+                                                        if($elements['confirm'] === '1'){?>
+                                                            <div class="choosen-content">
+                                                                <div class="ads-section-choose-auc">
+                                                                    <img class="photos unselectable" src="uploads/photos/<?=$elements['ads']?>" width="100%" height="100%"/>
+                                                                </div>
+                                                                <div class="ads-text-auc">
+                                                                    <p class="text-auc"><?php echo $elements['title'];?></p>
+                                                                    <p class="text-auc"><?php echo $elements['descript'];?></p>
+                                                                    <p class="text-auc"><?php echo $elements['regions'];?></p>
+                                                                    <p class="text-auc"><?php echo $elements['price'];?></p>
+                                                                    <p class="text-auc"><?php echo $elements['category'];?></p>
+                                                                </div>
+                                                                <div class="auc-radio">
+                                                                    <input id="radio-13<?php echo $i; ?>" type="radio" name="onetwo" value="13-<?=$i?>" class="element1" checked></input>
+                                                                    <label for="radio-13<?php echo $i; ?>"><span class="material-icons unselectable" style="font-size: 96px; color: white;" width="100%" height="100%">
+                                                                    check_circle
+                                                                    </span></label>
+                                                                </div>
+                                                            </div>
+                                                            <?php }
+                                                        endfor;?>
+                                                        <div name="choose-ads" class="close-choose div-close-choose">Ok</div>
+                                                </div>
+                                            </div>
+                                        </form>
+                        <button id="myBtn" class="add-ads">
+                            <span style="font-size: 3em; color: white;" class="material-icons unselectable">
+                                add_circle
+                                </span>
+                        </button>
                         <p class="text-other"> Добавить объявление</p>
+                            <div id="myModal" class="modal">
+                                <div class="modal-content">
+                                    <span class="close unselectable">&times;</span>
+                                    <div class="h2-popup">
+                                    <h2>Добавить новое объявление</h2><p class="info" data-tooltip="Добавьте фото, выберите параметры. После того как, Ваше объявление пройдет проверку, оно будет опубликовано.">&#128712;</p>
+                                    </div>
+                                        <form action="./gmdprofile.php" enctype="multipart/form-data" method="post" id="form">
+                                            <div class="content-ads">
+                                                <div id="file" class="content-ads-one upload">
+                                                    <input type="file" id="uploadbtn" multiple name="ads" class="modal-content-image" value="Добавить фото" style="display:none;" onchange="loadFile(event)">
+                                                    <label for="uploadbtn" class="modal-content-image">
+                                                        <span style="font-size: 3em; color: white;" class="material-icons unselectable">
+                                                        add_circle
+                                                        </span>
+                                                    </label>
+                                                    <p>Добавить объявление</p>
+                                                </div>
+                                                <div class="content-ads-two">
+                                                    <div id="preview" class="preview">
+                                                    <div id="data" class="data" width="100%" height="100%"></div>
+                                                    <img class="preimage" id="preimage" style="display: none"/>
+                                                    <div id="myVideo" class="myVideo" width="100%" height="100%" style="display: none"></div>
+                                                    </div>
+                                                        <h4 id="output1" class="title-output"><span class="unselectable" id="title-output"></span></h4>
+                                                        <h4 id="output2" class="descript-output"><span class="unselectable" id="descript-output"></span></h4>
+                                                        <h4 id="output3" class="region-output"><span class="unselectable" id="region-output"></span></h4>
+                                                        <h4 id="output4" class="price-output"><span class="unselectable" id="price-output"></span></h4>
+                                                        <h4 id="output5" class="category-output"><span class="unselectable" id="category-output"></span></h4>
+                                                        <p>Предпросмотр</p>
+                                                </div>
+                                                <div class="content-ads-three">
+                                                </div>
+                                            </div>
+                                            <div class="settings-ads">
+                                                <input type="text" name="title" class="items-settings-ads" placeholder="Добавить название" maxlength="14" id="title">
+                                                <?php
+                                                    $goods = R::getAssoc('SELECT id, goods_name FROM goods ORDER BY id DESC LIMIT 8');
+                                                    $services = R::getAssoc('SELECT id, services_name FROM services ORDER BY id DESC LIMIT 2');
+                                                    $job = R::getAssoc('SELECT id, job_name FROM job ORDER BY id DESC LIMIT 2');
+                                                    $art = R::getAssoc('SELECT id, art_name FROM art ORDER BY id DESC LIMIT 8');
+                                                    $profiles = R::getAssoc('SELECT id, profiles_name FROM profiles ORDER BY id DESC LIMIT 8');
+                                                    ?>
+                                                    <select class="items-settings-ads" name="category" required="required" id="category">
+                                                        <?php
+                                                    echo '<option selected="selected">Категория</option>';
+                                                    echo '<optgroup label="Товары">';
+                                                    foreach( $goods as $good ) {
+                                                        echo "<option value='$good'>$good</option>";
+                                                    }
+                                                    echo '</optgroup>';
+                                                    echo '<optgroup label="Услуги">';
+                                                    foreach( $services as $service ) {
+                                                        echo "<option value='$service'>$service</option>";
+                                                    }
+                                                    echo '</optgroup>';
+                                                    echo '<optgroup label="Работа">';
+                                                    foreach( $job as $jo ) {
+                                                        echo "<option value='$jo'>$jo</option>";
+                                                    }
+                                                    echo '</optgroup>';
+                                                    echo '<optgroup label="Творчество">';
+                                                    foreach( $art as $arts ) {
+                                                        echo "<option value='$arts'>$arts</option>";
+                                                    }
+                                                    echo '</optgroup>';
+                                                    echo '<optgroup label="Профили">';
+                                                    foreach( $profiles as $profile ) {
+                                                        echo "<option value='$profile'>$profile</option>";
+                                                    }
+                                                    echo '</optgroup>';
+                                                    echo '</select>';
+                                                ?>
+                                                <input type="text" name="descript" class="items-settings-ads" placeholder="Добавить описание" maxlength="20" id="description">
+                                                <?php 
+                                                $regions = R::getAssoc('SELECT id, city FROM regions');
+                                                ?>
+                                                <select class="items-settings-ads" name="regions" required="required" id="regions">
+                                                <?php
+                                                echo '<option selected="selected">Выбрать город</option>';
+
+                                                foreach( $regions as $region ) {
+                                                    echo "<option value='$region'>$region</option>";
+                                                }
+
+                                                echo '</select>';
+                                                ?>
+                                                    <span class="textbox">
+                                                    <input type="number" name="price" class="items-settings-ads" placeholder="Указать цену" id="price" min="1" maxlength="9" oninput="maxLengthCheck(this)">
+                                                    &#8381; </span>
+                                                <!-- <button data-jscolor="{closeButton:true, closeText:'Закрыть', backgroundColor:'#333', buttonColor:'#FFF'}">Цвет фона</button> -->
+                                            </div>
+                                            <input type="datetime-local" name="time" readonly>
+                                            <button type="submit" id="submit-ads" name="submit-ads" class="save-modal-content">Опубликовать
+                                                <span class="material-icons unselectable">
+                                                ios_share
+                                                </span>
+                                            </button>
+                                        </form>
+                                        </div>
+                                </div>
+                            </div>
                     </div>
                 </div>
             </div>
@@ -280,19 +630,27 @@
     </div>
 
     <div class="mySlides fade">
-        <section id="slide-4" class="balance-page" style="display:none">4
-            <div class="prev" onclick="plusSlides(7)">Вернуться к профилю</div>
+        <section id="slide-4" class="balance-page" style="display:none"> 
+            <div class="prev" onclick="plusSlides(7)"><span class="material-icons unselectable">
+                keyboard_backspace
+                </span></div>
             <div class="container">
-                <h1>Баланс</h1>
+                <h1>Мой баланс</h1>
                 <div class="balance-container">
                     <div class="left-block">
-                        <p class="balance-text">Пополнить баланс</p>
+                        <div class="payments-text">
+                            Пополнить баланс
+                        </div>
+                        <div class="payments">
+                            100 RUB 200 RUB 500 RUB 1000 RUB
+                        </div>
                     </div>
                     <div class="balance-circle">
-                        123412
+                        <p style="color: #000; font-size: 30px;">
+                        <?php echo '<span class="material-icons unselectable">account_balance_wallet</span> ', $user->balance, ' RUB'?></p>
                     </div>
                     <div class="right-block">
-                        <p class="balance-text">Вывести средства</p>
+                        Вывести средства
                     </div>
                 </div>
             </div>
@@ -300,46 +658,23 @@
     </div>
 
     <div class="mySlides fade">
-        <section id="slide-5" class="stats-1-page" style="display:none">5
-            <div class="prev" onclick="plusSlides(7)">Вернуться к профилю</div>
+        <section id="slide-5" class="stats-1-page" style="display:none"> 
+            <div class="prev" onclick="plusSlides(7)"><span class="material-icons unselectable">
+                keyboard_backspace
+                </span></div>
             <div class="container">
                 <h1>Статистика показов</h1>
                 <div id="regions_div" style="width: 900px; height: 500px;"></div>
-                <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-                <script type="text/javascript">
-                    google.charts.load('current', {
-                        'packages': ['geochart'],
-                        // Note: you will need to get a mapsApiKey for your project.
-                        // See: https://developers.google.com/chart/interactive/docs/basic_load_libs#load-settings
-                        'mapsApiKey': 'AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY'
-                    });
-                    google.charts.setOnLoadCallback(drawRegionsMap);
-
-                    function drawRegionsMap() {
-                        var data = google.visualization.arrayToDataTable([
-                            ['Country', 'Popularity'],
-                            ['Germany', 200],
-                            ['United States', 300],
-                            ['Brazil', 400],
-                            ['Canada', 500],
-                            ['France', 600],
-                            ['RU', 700]
-                        ]);
-
-                        var options = {};
-
-                        var chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
-
-                        chart.draw(data, options);
-                    }
-                </script>
+                
             </div>
         </section>
     </div>
 
     <div class="mySlides fade">
-        <section id="slide-6" class="stats-2-page" style="display:none">6
-            <div class="prev" onclick="plusSlides(7)">Вернуться к профилю</div>
+        <section id="slide-6" class="stats-2-page" style="display:none"> 
+            <div class="prev" onclick="plusSlides(7)"><span class="material-icons unselectable">
+                keyboard_backspace
+                </span></div>
             <div class="container">
                 <h1>Статистика профиля</h1>
                 <figure>
@@ -376,150 +711,214 @@
                         <p class="sr-only">Donut chart showing 10 total beers. Two beers are Imperial India Pale Ales, four beers are Belgian Quadrupels, and three are Russian Imperial Stouts. The last remaining beer is unlabeled.</p>
                         <ul class="figure-key-list" aria-hidden="true" role="presentation">
                             <li>
-                                <span class="shape-circle shape-fuschia"></span> Размещенные объявления
+                                <span class="shape-circle shape-fuschia unselectable"></span> Размещенные объявления
                             </li>
                             <li>
-                                <span class="shape-circle shape-lemon-lime"></span> Активность
+                                <span class="shape-circle shape-lemon-lime unselectable"></span> Активность
                             </li>
                             <li>
-                                <span class="shape-circle shape-blue"></span> Партнерская программа
+                                <span class="shape-circle shape-blue unselectable"></span> Партнерская программа
                             </li>
                         </ul>
                     </figcaption>
                 </figure>
-                <style>
-                    @import url(https://fonts.googleapis.com/css?family=Montserrat:400);
-                    body {
-                        font: 16px/1.4em "Montserrat", Arial, sans-serif;
-                    }
-                    
-                    * {
-                        -webkit-box-sizing: border-box;
-                        -moz-box-sizing: border-box;
-                        box-sizing: border-box;
-                    }
-                    
-                    .chart-text {
-                        /*font: 16px/1.4em "Montserrat", Arial, sans-serif;*/
-                        fill: #000;
-                        -moz-transform: translateY(0.25em);
-                        -ms-transform: translateY(0.25em);
-                        -webkit-transform: translateY(0.25em);
-                        transform: translateY(0.25em);
-                    }
-                    
-                    .chart-number {
-                        font-size: 0.6em;
-                        line-height: 1;
-                        text-anchor: middle;
-                        -moz-transform: translateY(-0.25em);
-                        -ms-transform: translateY(-0.25em);
-                        -webkit-transform: translateY(-0.25em);
-                        transform: translateY(-0.25em);
-                    }
-                    
-                    .chart-label {
-                        font-size: 0.2em;
-                        text-transform: uppercase;
-                        text-anchor: middle;
-                        -moz-transform: translateY(0.7em);
-                        -ms-transform: translateY(0.7em);
-                        -webkit-transform: translateY(0.7em);
-                        transform: translateY(0.7em);
-                    }
-                    
-                    figure {
-                        display: flex;
-                        justify-content: space-around;
-                        flex-direction: column;
-                        margin-left: -15px;
-                        margin-right: -15px;
-                    }
-                    
-                    @media (min-width: 768px) {
-                        figure {
-                            flex-direction: row;
-                        }
-                    }
-                    
-                    .figure-content,
-                    .figure-key {
-                        flex: 1;
-                        padding-left: 15px;
-                        padding-right: 15px;
-                        align-self: center;
-                    }
-                    
-                    .figure-content svg {
-                        height: auto;
-                    }
-                    
-                    .figure-key {
-                        min-width: calc(8 / 12);
-                    }
-                    
-                    .figure-key [class*="shape-"] {
-                        margin-right: 6px;
-                    }
-                    
-                    .figure-key-list {
-                        margin: 0;
-                        padding: 0;
-                        list-style: none;
-                    }
-                    
-                    .figure-key-list li {
-                        margin: 0 0 8px;
-                        padding: 0;
-                    }
-                    
-                    .shape-circle {
-                        display: inline-block;
-                        vertical-align: middle;
-                        width: 32px;
-                        height: 32px;
-                        -webkit-border-radius: 50%;
-                        -moz-border-radius: 50%;
-                        border-radius: 50%;
-                    }
-                    
-                    .shape-fuschia {
-                        background-color: #F686B6;
-                    }
-                    
-                    .shape-lemon-lime {
-                        background-color: #FCF570;
-                    }
-                    
-                    .shape-blue {
-                        background-color: #4BA6F9
-                    }
-                    
-                    .sr-only {
-                        position: absolute;
-                        width: 1px;
-                        height: 1px;
-                        margin: -1px;
-                        padding: 0;
-                        overflow: hidden;
-                        clip: rect(0, 0, 0, 0);
-                        border: 0;
-                    }
-                </style>
             </div>
         </section>
     </div>
-
-    <!-- <a class="prev" onclick="plusSlides(-1)"></a>
-        <a class="next" onclick="plusSlides(1)"></a> -->
-
-    </div>
-
-
+</div>
     <footer>
         <div class="footer">
         </div>
     </footer>
-</body>
 
+</body>
 </html>
+<?php endif; ?>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="./gmdprofile.js"></script>
+<script src="./pluggins/jscolor.js"></script>
+<!-- slides -->
+<script>
+$('#btn-2').on('click', function() {
+    $('#slide-2').show('slow');
+});
+$('#btn-1').on('click', function() {
+    $('#slide-1').show('slow');
+});
+$('#btn-3').on('click', function() {
+    $('#slide-3').show('slow');
+});
+$('#btn-4').on('click', function() {
+    $('#slide-4').show('slow');
+});
+$('#btn-5').on('click', function() {
+    $('#slide-5').show('slow');
+});
+$('#btn-6').on('click', function() {
+    $('#slide-6').show('slow');
+});
+</script>
+<!-- preview -->
+<script type="text/javascript">
+    function LoaadFile (event){
+        var output = document.getElementById('preimage');
+        output.src = URL.createObjectURL(event.target.files[0]);
+    };
+</script>
+<script>
+    if ( window.history.replaceState ) {
+        window.history.replaceState( null, null, window.location.href );
+    }
+</script>
+<script>
+    var loadFile = function(event) {
+    var preimage = document.getElementById('preimage');
+    preimage.src = URL.createObjectURL(event.target.files[0]);
+    preimage.onload = function() {
+        URL.revokeObjectURL(preimage.src)
+    }
+    for (let i = 0; i < 10; i++) {
+    document.getElementById("preimage").style.display = "block";
+    document.getElementById("myVideo").style.display = "none";
+}
+};
+</script>
+<script>
+    $(document).ready(function(){
+        $('#title').on('keyup',function(){
+            var title = $(this).val();
+            $('#title-output').text(title);
+        });
+        });
+        $(document).ready(function(){
+        $('#descript').on('keyup',function(){
+            var description = $(this).val();
+            $('#description-output').text(description);
+        });
+        });
+        $(document).ready(function(){
+        $('#regions').on('keyup',function(){
+            var regions = $(this).val();
+            $('#region-output').text(regions);
+        });
+        });
+        $(document).ready(function(){
+        $('#price').on('keyup',function(){
+            var price = $(this).val();
+            $('#price-output').text(price);
+        });
+        });
+        $(document).ready(function(){
+        $('#category').on('keyup',function(){
+            var category = $(this).val();
+            $('#category-output').text(category);
+        });
+        });
+</script>
+<!-- timer -->
+<!-- input-price -->
+<script>
+    function maxLengthCheckk(object)
+    {
+        if (object.value.length > object.maxLength)
+        object.value = object.value.slice(0, object.maxLength)
+    }
+    $(function(){
+    $('input[type="number"]').on('change keyup input click mouseup', function() {
+        this.value = this.value.replace(/^0|[^\d]/g, '');
+            })
+    });
+</script>
+<script>
+    function maxLengthCheck(object)
+    {
+        if (object.value.length > object.maxLength)
+        object.value = object.value.slice(0, object.maxLength)
+    }
+
+    $(function(){
+    $('input[type="number"]').on('change keyup input click mouseup', function() {
+        this.value = this.value.replace(/^0|[^\d]/g, '');
+            })
+    });
+
+</script>
+<!-- modalWins -->
+<script>
+    var change_modal_1 = document.getElementById("change-modal-1");
+    var change_btn_1 = document.getElementById("change-1");
+    var change_span_1 = document.getElementsByClassName("close-change-1")[0];
+
+    change_btn_1.onclick = function() {
+        change_modal_1.style.display = "block";
+    }
+
+    change_span_1.onclick = function() {
+        change_modal_1.style.display = "none";
+    }
+</script>
+<script>
+var modal = document.getElementById("myModal");
+var btn = document.getElementById("myBtn");
+var span = document.getElementsByClassName("close")[0];
+
+btn.onclick = function() {
+    modal.style.display = "block";
+}
+
+span.onclick = function() {
+    modal.style.display = "none";
+}
+</script>
+<script>
+    var modal_1 = document.getElementById("myModal-1");
+    var btn_1 = document.getElementById("myBtn-1");
+    var span_1 = document.getElementsByClassName("close-1")[0];
+
+    btn_1.onclick = function() {
+        modal_1.style.display = "block";
+    }
+
+    span_1.onclick = function() {
+        modal_1.style.display = "none";
+    }
+</script>
+<script>
+    $(document).ready(function(){
+    $(".close-choose").click(function(){
+        $(".selected-ads").hide();
+    });
+    $(".choose-ads").click(function(){
+        $(".selected-ads").show();
+    });
+});
+</script>
+<!-- google -->
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+    google.charts.load('current', {
+        'packages': ['geochart'],
+        // Note: you will need to get a mapsApiKey for your project.
+        // See: https://developers.google.com/chart/interactive/docs/basic_load_libs#load-settings
+        'mapsApiKey': 'AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY'
+    });
+    google.charts.setOnLoadCallback(drawRegionsMap);
+
+    function drawRegionsMap() {
+        var data = google.visualization.arrayToDataTable([
+            ['Country', 'Popularity'],
+            ['Germany', 200],
+            ['United States', 300],
+            ['Brazil', 400],
+            ['Canada', 500],
+            ['France', 600],
+            ['RU', 700]
+        ]);
+
+        var options = {};
+
+        var chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
+
+        chart.draw(data, options);
+    }
+</script>
