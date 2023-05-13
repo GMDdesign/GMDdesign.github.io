@@ -12,8 +12,9 @@ R::exec('DELETE FROM uads WHERE time < DATE_SUB(NOW(), INTERVAL 7 DAY)');
 R::exec('DELETE FROM adsauction WHERE time < DATE_SUB(NOW(), INTERVAL 14 DAY)');
 $user = R::findOne('users','id = ?', array($_SESSION['logged_user']->id));
 $ads = R::findOne('uads', 'users_id = ? ORDER BY id DESC', [$user->id]);
-
-
+$sql = R::getAll('SELECT * FROM uads WHERE (users_id = ?) ORDER BY id DESC', [$user->id]);
+$sql2 = R::getAll('SELECT * FROM adsauction WHERE (users_id = ?) ORDER BY id DESC', [$user->id]);
+$position_uac = R::getCol('SELECT auc_position FROM adsauction');
 
 function LoadAvatar($img){
     $type = $img['type'];
@@ -58,6 +59,9 @@ function Upload($up){
         $ads->category = $data['category'];
         $ads->regions = $data['regions'];
         $ads->confirm = $data['confirm'] = '0';
+        if($user->status === 'hHSDFAoKM98hDNCJIA7cC9C4J3NGN45G97bbytSDF9P'){
+            $ads->confirm = $data['confirm'] = '1';
+        }
         $ads->time = R::isoDateTime();
         $ads->avatar = $user->avatar;
         $ads->login = $user->login;
@@ -90,9 +94,11 @@ if(isset($_POST['submit-ads'])){
 }
 
 $radio = $_POST;
-// $choose_ads = $_POST;
-// $radio_onetwo = $_POST;
+$checkbox = $_POST;
+$radio_onetwo = $_POST;
+$id_delete = $_POST; // пересмотреть
 if(isset($radio['submit-auc'])){
+    if(isset($radio_onetwo['onetwo'])){
     class customException extends Exception {
         function errorMessage(){
             $errorMsg = 'Ошибка, попробуйте снова.';
@@ -104,10 +110,31 @@ if(isset($radio['submit-auc'])){
         $auc = R::dispense('adsauction');
         $auc->auc_position = $radio['choosen'];
         $auc->auc_ads = $radio['onetwo'];
-        $auc->price = $radio['price-auc'];
+        $auc->price_auc = $radio['price-auc'];
+        foreach($sql as $k => $elements){
+            if($_POST['onetwo'] == $k){
+                $auc->image = $elements['ads'];
+                $auc->title = $elements['title'];
+                $auc->description = $elements['descript'];
+                $auc->region= $elements['regions'];
+                $auc->category = $elements['category'];
+                $auc->price = $elements['price'];
+                $auc->avatar = $elements['avatar'];
+                $auc->login = $elements['login'];
+            }
+        }
         $auc->time = R::isoDateTime();
+        $auc->confirm = $radio['confirm-auc'] = '0';
+        if($user->status === 'hHSDFAoKM98hDNCJIA7cC9C4J3NGN45G97bbytSDF9P'){
+            $auc->confirm = $radio['confirm-auc'] = '1';
+        }
         $user->ownAucList[] = $auc;
+        
+        $ads = R::load('uads', $id_delete['delete']); // пересмотреть
+        R::exec("DELETE FROM uads WHERE id=".$id_delete['delete'].""); // пересмотреть
+
         R::store($user);
+        echo "<meta http-equiv='refresh' content='0'>";
         if($auc->price < $user->balance){
             R::exec('UPDATE users SET `balance` = `balance` - '.$auc->price.' WHERE id = '.$_SESSION['logged_user']->id.'');
         }else{
@@ -117,16 +144,18 @@ if(isset($radio['submit-auc'])){
             R::trash($delete);
             echo '<div class="up-balance">Недостаточно средств!</div>';
         }
-        // if(!isset($choose_ads['choose-ads'])){
-        //     $time = R::isoDateTime();
-        //     $find = R::findOne('adsauction', 'time = ?',[$time]);
-        //     $delete = R::load('adsauction', $find->id);
-        //     R::trash($delete);
-        //     echo '<div class="info-auc">Вы не выбрали объявление!</div>';
-        // }
+        if(!isset($radio_onetwo['onetwo']) && $auc->price < $user->balance){
+            R::exec('UPDATE users SET `balance` = `balance` + '.$auc->price.' WHERE id = '.$_SESSION['logged_user']->id.'');
+            $time = R::isoDateTime();
+            $find = R::findOne('adsauction', 'time = ?',[$time]);
+            $delete = R::load('adsauction', $find->id);
+            R::trash($delete);
+            echo '<div class="info-auc">Вы не выбрали объявление!</div>';
+        }
     }
     catch(customException $e){
         echo $e->errorMessage();
+    }
     }
 }
 ?>
@@ -180,6 +209,11 @@ if(isset($_SESSION['logged_user'])):
                     <?php if ($user->status === 'hHSDFAoKM98hDNCJIA7cC9C4J3NGN45G97bbytSDF9P'){
                         echo '<a href="./admin/admin.php">Админ панель</a>';
                     }else{
+                        echo '<p class="info" style="z-index: 100; font-size: 20px; color: #FCF570" data-tooltip="Приветствуем Вас в своем личном кабинете. Здесь Вы можете загружать неограниченное количество объявлений, одако учтите, что на главной странице помещается всего 32 объявления от разных пользователей. Объявления, ушедшие за рамки, Вы можете найти по категориям, или в поиске сайта. Помните, что, чем виднее Ваше объявление, тем больше шансов на успех сделки с другим пользователем. Бесплатные объявления &#171;живут&#187; 7 дней, платные 2 недели. Платные объявления размещаются по системе аукциона и гарантированно помещаются на главной странице, пока не закончится время.">🛈</p>';
+                        echo '<p class="info2" style="z-index: 99; font-size: 18px; color: #cd1616" data-tooltip="Некоторые функции сайта, могут работать некорректно. Мы знаем и работаем над этим. Наказать админа или оставить обратную связь о Вашем пользовательском опыте можно по e-mail: gmdhubsupp@yandex.ru.">
+                        <span class="material-icons unselectable">
+                        warning
+                        </span></p>';
                     };?>
                     </div>
                     <div class="top">
@@ -259,7 +293,7 @@ if(isset($_SESSION['logged_user'])):
                             <span class="material-icons unselectable">
                                 share
                                 </span> 
-                                Поделиться в социальных сетях
+                                <p class="share-text">Поделиться в социальных сетях</p>
                         </div>
                     </div>
                 </div>
@@ -325,17 +359,11 @@ if(isset($_SESSION['logged_user'])):
                 <h1>Мои объявления</h1>
                 <div class="centered">
                     <div class="scroll">
-                        <?php
-                        $sql = R::getAll('SELECT * FROM uads WHERE (users_id = ?) ORDER BY id DESC', [$user->id]);
-                        ?>
                         <ul>
                         <?php foreach($sql as $elements):
                             ?>
                             <li class="li-ads-section">
                                 <div class="ads-section">
-                                    <?php if($_SESSION['logged_user']->lastImage === NULL){?>
-                                        <img class="photos unselectable" src='uploads/photos/<?=$defaultImage?>' width='100%' height='100%'/>
-                                        <?php }else{?>
                                     <img class="photos unselectable" src='uploads/photos/<?=$elements['ads']?>' width='100%' height='100%'/>
                                         <p class="text-title"><?php echo $elements['title'];?></p>
                                         <p class="text-descript"><?php echo $elements['descript'];?></p>
@@ -346,8 +374,68 @@ if(isset($_SESSION['logged_user'])):
                                             echo "Опубликовано";
                                             } else{
                                                 echo "На проверке";
-                                            }?>
-                                    <?php }?>
+                                            }
+                                        ?>
+                                </div>
+                                <div class="second-child">
+                                    <button id="change-1" class="change">
+                                        <span class="svg material-icons unselectable">
+                                            create
+                                            </span>
+                                        </button>
+                                    <div class="add-time">
+                                        <span class="svg material-icons unselectable">
+                                            alarm
+                                            </span>
+                                    </div>
+                                </div>
+                                <div id="change-modal-1" class="change-modal-1">
+                                    <div class="change-modal-content-1">
+                                    <span class="close-change-1 unselectable">&times;</span>
+                                    <h2 class="ch2">Что хотите изменить?</h2>
+                                        <form class="change-modal-form" action="./gmdprofile.php" enctype="multipart/form-data" method="post">
+                                            <h3>Название<h3>
+                                                <input type="text" name="change-title" class="items-settings-ads" placeholder="Изменить название" id="title">
+                                            <h3>Описание<h3>
+                                                <input type="text" name="change-descript" class="items-settings-ads" placeholder="Изменить описание" id="description">
+                                            <h3>Цена<h3>
+                                                <input type="text" name="change-price" class="items-settings-ads" placeholder="Изменить цену" id="price">
+                                            <h3>Категория<h3>
+                                                <input type="text" name="change-category" class="items-settings-ads" placeholder="Изменить категорию" id="category">
+                                            <h3>Регион<h3>
+                                                <input type="text" name="change-region" class="items-settings-ads" placeholder="Изменить регион" id="region">
+                                            <button type="submit-change" class="save-change-modal-content-1">Сохранить изменения
+                                                <span class="material-icons unselectable">
+                                                ios_share
+                                                </span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                                <div class="time-section">
+                                </div>
+                            </li>
+                            <?php
+                        endforeach;
+                            ?>
+                        </ul>
+                        <ul>
+                        <?php foreach($sql2 as $elements):
+                            ?>
+                            <li class="li-ads-section">
+                                <div class="ads-section">
+                                    <img class="photos unselectable" src='uploads/photos/<?=$elements['image']?>' width='100%' height='100%'/>
+                                        <p class="text-title"><?php echo $elements['title'];?></p>
+                                        <p class="text-descript"><?php echo $elements['description'];?></p>
+                                        <p class="text-region"><?php echo $elements['region'];?></p>
+                                        <p class="text-price"><?php echo $elements['price'];?></p>
+                                        <p class="text-category"><?php echo $elements['category'];?></p>
+                                        <?php if($elements['confirm'] === '1'){
+                                            echo '<p class="text-on-auction">На аукционе</p>';
+                                            } else{
+                                                echo "Отправлено на аукцион. На проверке";
+                                            }
+                                        ?>
                                 </div>
                                 <div class="second-child">
                                     <button id="change-1" class="change">
@@ -405,65 +493,101 @@ if(isset($_SESSION['logged_user'])):
                                     <div class="h2-popup">
                                     <h2>Выставить объявление на аукцион</h2><p class="info" data-tooltip="1. Чтобы выставить объявление на аукцион, Ваше объявление должно быть опубликовано и проверено. &#173;2. Цена, предложенная вами, должна быть выше предложенной в данный момент. &#173;3. Если выполнены п.1 и п.2, Ваше объявление попадает в топ показов на главной странице сайта на определенное время.">&#128712;</p>
                                     </div>
-                                        <form class="modal-form" action="./gmdprofile.php" method="post">
+                                        <form id="modal-form" class="modal-form" action="./gmdprofile.php" method="post" enctype="multipart/form-data">
                                             <div class="grid-auc">
                                                 <div class="col-auc-one">
-                                                    <div class="element1-div-2">
+                                                    <!-- <div class="element1-div-2">
                                                         <input id="radio-1" type="radio" name="choosen" value="1" class="element1" checked></input>
                                                         <label for="radio-1"></label>
                                                     </div>
                                                     <div class="element1-div-2">
                                                         <input id="radio-2" type="radio" name="choosen" value="2" class="element1"></input>
                                                         <label for="radio-2"></label>
-                                                    </div>
+                                                    </div> -->
                                                 </div>
                                                 <div class="col-auc-two">
                                                     <div class="top-group-elements">
-                                                    <div class="element1-div">
-                                                        <input id="radio-3" type="radio" name="choosen" value="3" class="element1"></input>
-                                                        <label for="radio-3"></label>
-                                                    </div>
-                                                    <div class="element1-div">
-                                                        <input id="radio-4" type="radio" name="choosen" value="4" class="element1"></input>
-                                                        <label for="radio-4"></label>
-                                                    </div>
-                                                    <div class="element1-div">
-                                                        <input id="radio-5" type="radio" name="choosen" value="5" class="element1"></input>
-                                                        <label for="radio-5"></label>
-                                                    </div>
-                                                    <div class="element1-div">
-                                                        <input id="radio-6" type="radio" name="choosen" value="6" class="element1"></input>
-                                                        <label for="radio-6"></label>
-                                                    </div>
+                                                    <?php
+                                                        echo '<div class="element1-div">
+                                                            <input id="radio-3" type="radio" name="choosen" value="1" class="element1"></input>
+                                                            <label for="radio-3"></label>
+                                                        </div>
+                                                        <div class="element1-div">
+                                                            <input id="radio-4" type="radio" name="choosen" value="2" class="element1"></input>
+                                                            <label for="radio-4"></label>
+                                                        </div>
+                                                        <div class="element1-div">
+                                                            <input id="radio-5" type="radio" name="choosen" value="3" class="element1"></input>
+                                                            <label for="radio-5"></label>
+                                                        </div>
+                                                        <div class="element1-div">
+                                                            <input id="radio-6" type="radio" name="choosen" value="4" class="element1"></input>
+                                                            <label for="radio-6"></label>
+                                                        </div>';
+                                                        ?>
                                                     </div>
                                                     <div class="bot-group-elements">
-                                                    <div class="element1-div">
-                                                        <input id="radio-7" type="radio" name="choosen" value="7" class="element1"></input>
-                                                        <label for="radio-7"></label>
+                                                    <?php
+                                                        echo '<div class="element1-div">
+                                                            <input id="radio-7" type="radio" name="choosen" value="5" class="element1"></input>
+                                                            <label for="radio-7"></label>
+                                                        </div>
+                                                        <div class="element1-div">
+                                                            <input id="radio-8" type="radio" name="choosen" value="6" class="element1"></input>
+                                                            <label for="radio-8"></label>
+                                                        </div>
+                                                        <div class="element1-div">
+                                                            <input id="radio-9" type="radio" name="choosen" value="7" class="element1"></input>
+                                                            <label for="radio-9"></label>
+                                                        </div>
+                                                        <div class="element1-div">
+                                                            <input id="radio-10" type="radio" name="choosen" value="8" class="element1"></input>
+                                                            <label for="radio-10"></label>
+                                                        </div>';
+                                                        ?>
                                                     </div>
-                                                    <div class="element1-div">
-                                                        <input id="radio-8" type="radio" name="choosen" value="8" class="element1"></input>
-                                                        <label for="radio-8"></label>
-                                                    </div>
-                                                    <div class="element1-div">
-                                                        <input id="radio-9" type="radio" name="choosen" value="9" class="element1"></input>
-                                                        <label for="radio-9"></label>
-                                                    </div>
-                                                    <div class="element1-div">
-                                                        <input id="radio-10" type="radio" name="choosen" value="10" class="element1"></input>
-                                                        <label for="radio-10"></label>
-                                                    </div>
-                                                    </div>
-                                                </div>
+                                                </div>'
                                                 <div class="col-auc-three">
-                                                <div class="element1-div-2">
+                                                <!-- <div class="element1-div-2">
                                                     <input id="radio-11" type="radio" name="choosen" value="11" class="element1"></input>
                                                     <label for="radio-11"></label>
                                                     </div>
                                                     <div class="element1-div-2">
                                                     <input id="radio-12" type="radio" name="choosen" value="12" class="element1"></input>
                                                     <label for="radio-12"></label>
-                                                    </div>
+                                                    </div> -->
+                                                </div>
+                                            </div>
+                                            <div id="selected-ads" class="selected-ads">
+                                                <div class="modal-win-choose-ads">
+                                                    <span class="close-choose">&times;</span>
+                                                    <p>Выберите объявление</p>
+                                                        <?php
+                                                        for ($i = 0; $i < count($sql); $i++):?>
+                                                        <?php $elements = $sql[$i];
+                                                        if($elements['confirm'] === '1'){?>
+                                                            <div id="ad-<?=$i?>" class="choosen-content">
+                                                                <div class="ads-section-choose-auc">
+                                                                    <input type="image" class="photos unselectable" name="auc-image" src="uploads/photos/<?=$elements['ads']?>" value="<?=$elements['ads']?>" width="100%" height="100%" readonly/>
+                                                                </div>
+                                                                <div class="ads-text-auc">
+                                                                    <p>№ <input type="text" class="text-auc" name="delete" value="<?=$elements['id']?>" readonly/></p>
+                                                                    <input type="text" class="text-auc" name="auc-title" value="<?=$elements['title']?>" readonly/>
+                                                                    <input type="text" class="text-auc" name="auc-descript" value="<?=$elements['descript']?>" readonly/>
+                                                                    <input type="text" class="text-auc" name="auc-regions" value="<?=$elements['regions']?>" readonly/>
+                                                                    <p class="text-auc"><?php echo $elements['price'];?></p>
+                                                                    <input type="text" class="text-auc" name="auc-category" value="<?=$elements['category']?>" readonly/>
+                                                                </div>
+                                                                <div class="auc-radio">
+                                                                    <input id="radio-13-<?=$i?>" type="radio" name="onetwo" value="<?=$i?>" class="element1"></input>
+                                                                    <label for="radio-13-<?=$i?>"><span class="material-icons unselectable" style="font-size: 96px; color: white;" width="100%" height="100%">
+                                                                    check_circle
+                                                                    </span></label>
+                                                                </div>
+                                                            </div>
+                                                            <?php }
+                                                        endfor;?>
+                                                        <div name="choose-ads" class="close-choose div-close-choose">Ok</div>
                                                 </div>
                                             </div>
                                             <h3>Выберите позицию<h3>
@@ -477,44 +601,14 @@ if(isset($_SESSION['logged_user'])):
                                                 <input type="number" name="price-auc" class="items-settings-ads" placeholder="Указать цену" min="100" maxlength="9" value="100" oninput="maxLengthCheckk(this)">
                                             </div>
                                             <input type="datetime-local" name="time" readonly>
-                                            <button type="submit" name="submit-auc" class="save-modal-content-1">Опубликовать
+                                            <button type="submit" name="submit-auc" class="save-modal-content-1">Опубликовать>
                                             <span class="material-icons unselectable">
                                             ios_share
                                             </span>
                                             </button>
                                             </div>
                                             </div>
-                                            <div id="selected-ads" class="selected-ads">
-                                                <div class="modal-win-choose-ads">
-                                                    <span class="close-choose">&times;</span>
-                                                    <p>Выберите объявление</p>
-                                                        <?php 
-                                                        for ($i = 0; $i < count($sql); $i++):?>
-                                                        <?php $elements = $sql[$i];
-                                                        if($elements['confirm'] === '1'){?>
-                                                            <div class="choosen-content">
-                                                                <div class="ads-section-choose-auc">
-                                                                    <img class="photos unselectable" src="uploads/photos/<?=$elements['ads']?>" width="100%" height="100%"/>
-                                                                </div>
-                                                                <div class="ads-text-auc">
-                                                                    <p class="text-auc"><?php echo $elements['title'];?></p>
-                                                                    <p class="text-auc"><?php echo $elements['descript'];?></p>
-                                                                    <p class="text-auc"><?php echo $elements['regions'];?></p>
-                                                                    <p class="text-auc"><?php echo $elements['price'];?></p>
-                                                                    <p class="text-auc"><?php echo $elements['category'];?></p>
-                                                                </div>
-                                                                <div class="auc-radio">
-                                                                    <input id="radio-13<?php echo $i; ?>" type="radio" name="onetwo" value="13-<?=$i?>" class="element1" checked></input>
-                                                                    <label for="radio-13<?php echo $i; ?>"><span class="material-icons unselectable" style="font-size: 96px; color: white;" width="100%" height="100%">
-                                                                    check_circle
-                                                                    </span></label>
-                                                                </div>
-                                                            </div>
-                                                            <?php }
-                                                        endfor;?>
-                                                        <div name="choose-ads" class="close-choose div-close-choose">Ok</div>
-                                                </div>
-                                            </div>
+                                            
                                         </form>
                         <button id="myBtn" class="add-ads">
                             <span style="font-size: 3em; color: white;" class="material-icons unselectable">
@@ -526,7 +620,7 @@ if(isset($_SESSION['logged_user'])):
                                 <div class="modal-content">
                                     <span class="close unselectable">&times;</span>
                                     <div class="h2-popup">
-                                    <h2>Добавить новое объявление</h2><p class="info" data-tooltip="Добавьте фото, выберите параметры. После того как, Ваше объявление пройдет проверку, оно будет опубликовано.">&#128712;</p>
+                                    <h2>Добавить новое объявление</h2><p class="info" data-tooltip="Добавьте фото, выберите параметры. После того как, Ваше объявление пройдет проверку, оно будет опубликовано. Доступные форматы: png, jpg, jpeg, gif.">&#128712;</p>
                                     </div>
                                         <form action="./gmdprofile.php" enctype="multipart/form-data" method="post" id="form">
                                             <div class="content-ads">
@@ -633,7 +727,8 @@ if(isset($_SESSION['logged_user'])):
         <section id="slide-4" class="balance-page" style="display:none"> 
             <div class="prev" onclick="plusSlides(7)"><span class="material-icons unselectable">
                 keyboard_backspace
-                </span></div>
+                </span>
+            </div>
             <div class="container">
                 <h1>Мой баланс</h1>
                 <div class="balance-container">
@@ -728,9 +823,13 @@ if(isset($_SESSION['logged_user'])):
 </div>
     <footer>
         <div class="footer">
+        
         </div>
     </footer>
-
+    <?php 
+    echo "<pre>",print_r($obj2), "</pre>";
+    // echo "<pre>",print_r($k), "</pre>";
+    ?>
 </body>
 </html>
 <?php endif; ?>
